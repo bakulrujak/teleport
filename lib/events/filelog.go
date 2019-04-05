@@ -120,14 +120,19 @@ func (l *FileLog) EmitAuditEvent(eventType string, fields EventFields) error {
 		log.Error(err)
 	}
 
-	// set event type, unique ID and time:
-	fields[EventType] = eventType
-	if fields.GetID() == "" {
-		fields[EventID] = l.UIDGenerator.New()
+	if err := AugmentEventFields(eventType, fields, l.Clock, l.UIDGenerator); err != nil {
+		return trace.Wrap(err)
 	}
-	if _, ok := fields[EventTime]; !ok {
-		fields[EventTime] = l.Clock.Now().In(time.UTC).Round(time.Second)
-	}
+
+	// // set event type, unique ID and time:
+	// fields[EventType] = eventType
+	// if fields.GetID() == "" {
+	// 	fields[EventID] = l.UIDGenerator.New()
+	// }
+	// if _, ok := fields[EventTime]; !ok {
+	// 	fields[EventTime] = l.Clock.Now().In(time.UTC).Round(time.Second)
+	// }
+
 	// line is the text to be logged
 	line, err := json.Marshal(fields)
 	if err != nil {
